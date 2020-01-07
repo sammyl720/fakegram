@@ -3,6 +3,7 @@ const { buildSchema } = require('graphql')
 module.exports = buildSchema(`
   type Query {
     users: [User!]!
+    me: User!
     user(id: ID): User!
     hello: String!
     posts: [Post!]!
@@ -10,7 +11,9 @@ module.exports = buildSchema(`
   }
   type Mutation {
     createUser(data: CreateUserInput): User!
+    EditUser(data: EditUserInput): User!
     loginUser(data: LoginUserInput): UserWithToken!
+    likePost(id: ID): Post!
     createPost(data: CreatePostInput): Post!
     updatePost(id: ID!, data: UpdatePostInput): Post!
     deletePost(id: ID!): Post!
@@ -19,6 +22,15 @@ module.exports = buildSchema(`
     id: ID!
     name: String!
     email: String!
+    posts: [Post!]
+    profileUrl: String
+    age: Int
+  }
+
+  input EditUserInput{
+    name: String
+    email: String
+    profileUrl: String
     age: Int
   }
   type Post {
@@ -29,6 +41,13 @@ module.exports = buildSchema(`
     published: Boolean!
     datetime: String
     user: User!
+    likes: [UserLike!]!
+    likeCount: Int
+  }
+  type UserLike {
+    id: ID!
+    name: String
+    profileUrl: String
   }
   input CreatePostInput {
     title: String!

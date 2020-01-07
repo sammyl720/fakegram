@@ -1,10 +1,11 @@
 const Post = require('../models/Post')
 const User = require('../models/User')
+const getUsersFromLikes = require('../utils/getUsersFromLikes')
 const authToken = require('../utils/authToken')
 module.exports = {
-  posts: async (args, context ) => {
+  posts: async (args, context) => {
     try {
-      let allPosts = await Post.find({ published: true })
+      let allPosts = await Post.find({ published: true }).sort('-datetime')
       allPosts = allPosts.map(async post => {
         post.user = await User.findById(post.user)
         return post
@@ -23,7 +24,7 @@ module.exports = {
       let posts = await Post.find({ user: userId })
       const user = await User.findById(userId)
       // console.log(user)
-      posts = posts.map(post => {
+      posts = posts.map(async post => {
         post.user = user
         return post
       })
@@ -31,6 +32,29 @@ module.exports = {
       return posts
     } catch (e) {
       console.log('myPost error', e)
+    }
+  },
+  likePost: async (args, context) => {
+    try {
+      const userId = authToken(context)
+      const post = await Post.findById(args.id)
+      post.likes = post.likes.filter(
+        user =>
+          user !== 'undefined' &&
+          user !== null &&
+          user.name !== null &&
+          user.name !== 'undefined'
+      )
+      const findUser = post.likes.find(user => userId === user.id.toString())
+      if (!findUser) {
+        post.likes.push(await getUsersFromLikes(userId))
+        post.likeCount = post.likes.length
+      }
+      // console.log(post.likes)
+      await post.save()
+      return post
+    } catch (e) {
+      console.log('like post error', e)
     }
   },
   createPost: async (args, context) => {
@@ -65,18 +89,18 @@ module.exports = {
       console.log('update post error', e)
     }
   },
-  deletePost: async (args, context ) => {
+  deletePost: async (args, context) => {
     try {
       const userId = authToken(context)
       const post = await Post.findById(args.id)
-      console.log(`${post.user} === ${userId}`)
+      // console.log(`${post.user} === ${userId}`)
       if (post.user.toString() !== userId) {
         throw new Error('Not authorized')
       }
       const user = await User.findById(userId)
       post.user = user
-      const result = await Post.findByIdAndDelete(args.id)
-      console.log(result)
+      await Post.findByIdAndDelete(args.id)
+      // console.log(result)
       return post
     } catch (e) {
       console.log('delete post error', e)

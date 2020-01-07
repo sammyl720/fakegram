@@ -1,4 +1,5 @@
 const User = require('../models/User')
+const Post = require('../models/Post')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const posts = require('./posts')
@@ -10,15 +11,23 @@ module.exports = {
   },
   users: async (args, context) => {
     // console.log('users resolver')
-    const users = await User.find().select('-password')
+    let users = await User.find().select('-password')
     // console.log(users)
+    users = users.map(async user => {
+      user.posts = await Post.find({ user: user.id, published: true })
+      return user
+    })
     return users
   },
   user: async (args, context) => {
-    const user = await User.findOne({ id: args.id }).select('-password')
+    // console.log(args)
+
+    const user = await User.findById(args.id).select('-password')
+    // console.log(`user: ${user}`)
+    user.posts = await Post.find({ user: user.id, published: true })
     return user
   },
-  createUser: async (args, context ) => {
+  createUser: async (args, context) => {
     // console.log(args)
     const { name, email, password } = args.data
     if (!name || !email || !password) {
@@ -29,7 +38,7 @@ module.exports = {
     try {
       const hashedPassword = await bcrypt.hash(password, 12)
       const emailExists = await User.findOne({ email })
-      if ( emailExists ) {
+      if (emailExists) {
         console.log('user with that e-mail already exists ')
         throw new Error('E-mail already in use')
       }
@@ -46,8 +55,36 @@ module.exports = {
       console.log('user post error', err)
     }
   },
+  EditUser: async (args, context) => {
+    try {
+      const userId = authToken(context)
+      if (!userId) {
+        throw new Error('unauthorized')
+      }
+      // console.log(args.data)
+      const updatedUser = await User.findByIdAndUpdate(userId, args.data, {
+        useFindAndModify: false
+      })
+      updatedUser.posts = await Post.find({ user: userId })
+      return updatedUser
+    } catch (e) {
+      console.log('edit user error', e)
+    }
+  },
+  me: async (args, context) => {
+    try {
+      const userId = authToken(context)
+      if (!userId) {
+        throw new Error('unauthorized')
+      }
+      const user = await User.findById(userId)
+      user.posts = await Post.find({ user: userId })
+      return user
+    } catch (e) {
+      console.log('user error', e)
+    }
+  },
   loginUser: async (args, context) => {
-    console.log(authToken(context))
     const { password, email } = args.data
     try {
       const user = await User.findOne({ email })
@@ -55,7 +92,10 @@ module.exports = {
       if (!isMatch) {
         throw new Error('Incorrect credentials')
       } else {
-        const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '1day' })
+        user.posts = await Post.find({ user: user.id })
+        const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
+          expiresIn: '1day'
+        })
         return {
           user,
           token

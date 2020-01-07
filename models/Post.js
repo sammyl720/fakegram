@@ -18,8 +18,18 @@ const PostSchema = mongoose.Schema({
   datetime: {
     type: Date,
     default: Date.now
-  }
+  },
+  likes: [
+    {
+      id: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+      },
+      name: String,
+      profileUrl: String
+    }
+  ],
+  likeCount: Number
 })
 
 module.exports = new mongoose.model('Post', PostSchema)
-
