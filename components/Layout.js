@@ -5,7 +5,7 @@ const Layout = props => {
   return (
     <React.Fragment>
       <Head>
-        <title>Custom title</title>
+        <title>FakeGram</title>
         <link
           rel='stylesheet'
           href='https://bootswatch.com/4/solar/bootstrap.min.css'
