@@ -85,6 +85,7 @@ module.exports = {
     }
   },
   loginUser: async (args, context) => {
+    console.log('server cookie: ', context.cookie)
     const { password, email } = args.data
     // console.log(args.data, 'login server')
     try {
@@ -107,6 +108,7 @@ module.exports = {
       }
     } catch (e) {
       console.log('login user error', e)
+      // throw e.message
     }
   },
   ...posts

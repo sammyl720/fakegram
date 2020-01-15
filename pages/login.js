@@ -23,12 +23,13 @@ const Login = ({ authorization }) => {
     password: ''
   })
 
-  const [login] = useMutation(query, {
+  const [login, { loading, error }] = useMutation(query, {
     variables: {
       creds
     },
     onCompleted: data => {
       // console.log('TOKEN from server', data)
+      window.document.cookie = `token=${data.loginUser.token}`
       window.localStorage.setItem('token', data.loginUser.token)
       router.push('/account')
     }
@@ -83,23 +84,22 @@ const Login = ({ authorization }) => {
           Submit
         </button>
       </form>
-    </Layout>
-  )
-}
-
-const Authorize = creds => {
-  useMutation(query, {
-    variables: {
-      creds
-    },
-    onCompleted: data => {
-      console.log('TOKEN from server', data)
-    }
-  })
-  return (
-    <Layout>
-      <h1>LOGIN</h1>
-      <h3>Loading ...</h3>
+      {error && (
+        <div className='row'>
+          <div className='col-sm-6 offset-sm-3'>
+            <div className='alert alert-danger my-2' role='alert'>
+              Incorrect credentials
+            </div>
+            {error.graphQLErrors.map(({ message }) => {
+              return (
+                <div className='alert alert-warning my-2' role='alert'>
+                  {message}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
     </Layout>
   )
 }
