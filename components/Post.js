@@ -6,23 +6,25 @@ const Post = ({ post, ...props }) => {
   return (
     <div className='row m-3 size bg-light text-dark shadow p-4'>
       {post.user && (
-        <div className='col-sm-12 p-2'>
+        <div className='col-sm-12 p-2 mb-1'>
           <div className='row'>
-            <div className='col-sm-1'>
+            <div className='col-md-1 col-sm-2'>
               <div className='profile-img' />
             </div>
-            <div className='col-sm-2'>
+            <div className='col-md-2 col-sm-3'>
               <h3>{post.user.name}</h3>
             </div>
           </div>
         </div>
       )}
       {post.imageUrl && (
-        <div className={`col-sm-${props.bigPic ? '5' : '3'} image`}> </div>
+        <div className={`col-md-${props.bigPic ? '5' : '3'} image col-sm-12`}>
+          {' '}
+        </div>
       )}
-      <div className={`col-sm-${props.bigPic ? '7' : '9'}`}>
+      <div className={`col-md-${props.bigPic ? '7' : '9'} col-sm-12`}>
         <div className='row'>
-          <div className='col-sm-3 offset-sm-9'>
+          <div className='col-md-3 offset-sm-9'>
             <small className='float-right'>
               <Moment fromNow unix>
                 {post.datetime / 1000}

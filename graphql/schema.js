@@ -9,10 +9,11 @@ module.exports = buildSchema(`
     posts: [Post!]!
     myPosts: [Post!]!
   }
+
   type Mutation {
     createUser(data: CreateUserInput): User!
     EditUser(data: EditUserInput): User!
-    loginUser(data: LoginUserInput): UserWithToken!
+    loginUser(data: LoginUserInput!): UserWithToken!
     likePost(id: ID): Post!
     createPost(data: CreatePostInput): Post!
     updatePost(id: ID!, data: UpdatePostInput): Post!

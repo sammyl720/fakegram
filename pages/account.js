@@ -1,17 +1,72 @@
 import Layout from '../components/Layout'
-import fetch from 'isomorphic-unfetch'
 import Post from '../components/Post'
-const account = props => {
-  const user = props.data.me
-  const { posts } = props.data.me
+import { useEffect } from 'react'
+import gql from 'graphql-tag'
+import { useQuery } from '@apollo/react-hooks'
+import { useRouter } from 'next/router'
+import withApollo from '../lib/apollo'
+
+const query = gql`
+  {
+    me {
+      name
+      email
+      age
+      id
+      profileUrl
+      posts {
+        title
+        description
+        id
+        imageUrl
+        datetime
+      }
+    }
+  }
+`
+
+const account = () => {
+  const router = useRouter()
+
+  const isSsr = typeof window === 'undefined'
+  useEffect(() => {}, [isSsr])
+
+  if (isSsr) {
+    return (
+      <Layout>
+        <h3 style={{ textAlign: 'center' }}>Loading...</h3>
+      </Layout>
+    )
+  }
+  const { loading, data, error } = useQuery(query, {
+    onError: () => {
+      router.push('/login')
+    }
+  })
+  if (loading) {
+    return (
+      <Layout>
+        <h3 style={{ textAlign: 'center' }}>Loading...</h3>
+      </Layout>
+    )
+  }
+  if (error) {
+    return (
+      <Layout>
+        <h3 style={{ textAlign: 'center' }}>Ther was a error</h3>
+        <p>{JSON.stringify(error)}</p>
+        <div className='alert alert-danger' role='alert'>
+          {error.message}
+        </div>
+      </Layout>
+    )
+  }
+  const { posts } = data.me
+  const user = data.me
+  // console.log(data)
   return (
     <Layout>
-      {props.errors && (
-        <div className='alert alert-danger' role='alert'>
-          {props.errors[0].message}
-        </div>
-      )}
-      {props.data && (
+      {data && (
         <div className='row'>
           <div className='col-sm-3'>
             <h1 className='mb-3'>Account Info</h1>
@@ -32,7 +87,7 @@ const account = props => {
           <div className='col-sm-9 p-3'>
             <h3 className='title'>My posts</h3>
             {posts.map(post => {
-              return <Post key={post.id} post={post} bigPic />
+              return <Post key={post.id} post={post} user={user} bigPic />
             })}
           </div>
         </div>
@@ -41,53 +96,4 @@ const account = props => {
   )
 }
 
-account.getInitialProps = async ctx => {
-  let authorization
-  if (!ctx.req) {
-    const token = window.localStorage.getItem('token')
-    authorization = `Bearer ${token}`
-  } else {
-    authorization = ctx.req.headers['authorization']
-  }
-  if (!authorization) {
-    return {
-      errors: [
-        {
-          message: 'unauthorized'
-        }
-      ]
-    }
-  }
-  const query = `
-  {
-    me{
-      name
-      email
-      age
-      id
-      profileUrl
-      posts{
-        title
-        description
-        id
-        imageUrl
-        datetime
-      }
-    }
-  }
-  `
-  const options = {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      authorization
-    },
-    body: JSON.stringify({ query })
-  }
-  const res = await fetch('http://127.0.0.1:3000/graphql', options)
-  const { data } = await res.json()
-  // console.log(data.posts)
-  return { data }
-}
-
-export default account
+export default withApollo(account)

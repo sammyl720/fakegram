@@ -1,7 +1,29 @@
-import fetch from 'isomorphic-unfetch'
 import Post from '../components/Post'
 import Layout from '../components/Layout'
-const Index = ({ data: { posts } }) => {
+import gql from 'graphql-tag'
+import { useQuery } from '@apollo/react-hooks'
+import { useRouter } from 'next/router'
+import withApollo from '../lib/apollo'
+const Index = props => {
+  // console.log(`PROPS`, props)
+  const router = useRouter()
+  const { loading, data, error } = useQuery(props.query)
+  if (loading) {
+    return (
+      <Layout>
+        <h3 style={{ textAlign: 'center' }}>Loading</h3>
+      </Layout>
+    )
+  }
+  if (error) {
+    return (
+      <Layout>
+        <h3 style={{ textAlign: 'center' }}>Ther was a error</h3>
+        <p>{JSON.stringify(error)}</p>
+      </Layout>
+    )
+  }
+  const { posts } = data
   return (
     <Layout>
       {posts.map(post => (
@@ -11,8 +33,8 @@ const Index = ({ data: { posts } }) => {
   )
 }
 
-Index.getInitialProps = async () => {
-  const query = `
+Index.getInitialProps = async ctx => {
+  const query = gql`
     {
       posts {
         id
@@ -22,12 +44,12 @@ Index.getInitialProps = async () => {
         imageUrl
         datetime
         likeCount
-        user{
+        user {
           name
           email
           profileUrl
         }
-        likes{
+        likes {
           id
           profileUrl
           name
@@ -35,16 +57,7 @@ Index.getInitialProps = async () => {
       }
     }
   `
-  const options = {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ query })
-  }
-  const res = await fetch('http://127.0.0.1:3000/graphql', options)
-  const { data } = await res.json()
-  // console.log(data.posts)
-  return { data }
+
+  return { query }
 }
-export default Index
+export default withApollo(Index)

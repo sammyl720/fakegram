@@ -86,8 +86,12 @@ module.exports = {
   },
   loginUser: async (args, context) => {
     const { password, email } = args.data
+    // console.log(args.data, 'login server')
     try {
       const user = await User.findOne({ email })
+      if (!user) {
+        throw new Error('Incorrect credentials')
+      }
       const isMatch = await bcrypt.compare(password, user.password)
       if (!isMatch) {
         throw new Error('Incorrect credentials')
